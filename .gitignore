@@ -1,0 +1,31 @@
+# Virtual Environment
+venv/
+.venv/
+
+# Python Cache
+__pycache__/
+*.py[cod]
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Environment Variables
+.env
+
+# VS Code
+.vscode/
+
+# Streamlit secrets
+.streamlit/secrets.toml
+
+# Data files - heavy, not needed on GitHub
+data/raw/
+data/processed/
+*.csv
+
+# Trained model files
+models/*.pkl
+models/*.joblib
+
+# OS Files
+.DS_Store
