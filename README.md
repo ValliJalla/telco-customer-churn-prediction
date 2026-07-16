@@ -41,7 +41,7 @@ Used a stratified 80/20 train-test split to preserve the churn ratio across both
 ### 4. Explainability (SHAP)
 Used SHAP to validate model decisions against EDA findings — confirmed that `tenure`, `MonthlyCharges`, `Contract type`, and `InternetService (Fiber optic)` are the strongest churn drivers, with directionality matching business intuition. This consistency between EDA and model explainability builds confidence that the model is learning genuine patterns, not noise.
 
-![SHAP Summary Plot](plots/shap_summary.png)
+![SHAP Summary Plot](plots/shap.png)
 
 ### 5. Business Impact
 Translated model predictions into a retention campaign ROI estimate, using the top 20% highest-risk customers (by predicted churn probability) on the test set:
@@ -62,7 +62,7 @@ Built an interactive multi-page Streamlit app:
 - **Prediction page:** Input customer details → get churn probability, a risk level (Low/Medium/High), and the top factors driving that specific prediction
 - **Business Impact page:** View aggregated ROI metrics and a visual breakdown of revenue at risk vs. campaign cost vs. net savings
 
-![Dashboard Screenshot](plots/dashboard_prediction.png)
+![Dashboard Screenshot](plots/business.png)
 
 ## 🛠️ Tech Stack
 - **Language:** Python
