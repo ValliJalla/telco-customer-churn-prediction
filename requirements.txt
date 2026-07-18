@@ -8,5 +8,5 @@ xgboost
 lightgbm
 imbalanced-learn
 shap
-streamlit
 jupyter
+flask
