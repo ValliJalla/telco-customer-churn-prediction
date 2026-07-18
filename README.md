@@ -58,30 +58,28 @@ Translated model predictions into a retention campaign ROI estimate, using the t
 *Assumptions: ₹200 retention offer cost per customer, 24-month average customer lifetime value. These are illustrative and would be validated with business stakeholders in a real deployment.*
 
 ## 🖥️ Dashboard
-Built an interactive multi-page Streamlit app:
-- **Prediction page:** Input customer details → get churn probability, a risk level (Low/Medium/High), and the top factors driving that specific prediction
-- **Business Impact page:** View aggregated ROI metrics and a visual breakdown of revenue at risk vs. campaign cost vs. net savings
+Built an interactive Flask-based web application with HTML, CSS, and JavaScript for the user interface. The application allows users to enter customer details, receive churn predictions with risk explanations, and view business impact metrics through interactive Plotly visualizations.
 
 ![Dashboard Screenshot](plots/business.png)
 
-## 🛠️ Tech Stack
 - **Language:** Python
 - **Data handling:** pandas, numpy
 - **ML:** scikit-learn, XGBoost
 - **Explainability:** SHAP
-- **Dashboard:** Streamlit, Plotly
+- **Web App:** Flask, HTML, CSS, JavaScript
+- **Visualization:** Plotly  
 
 ## 🚀 How to Run
 
-```bash
+-bash
 git clone <your-repo-url>
 cd churn-prediction
 pip install -r requirements.txt
-streamlit run app/streamlit_app.py
-```
+python flask_app.py
+
 
 ## 📁 Project Structure
-```
+
 churn-prediction/
 ├── data/
 │   ├── raw/                          # original dataset
@@ -98,7 +96,7 @@ churn-prediction/
 │       └── 2_Business_Impact.py
 ├── requirements.txt
 └── README.md
-```
+
 
 ## 🔮 Future Improvements
 - Compare SMOTE against `class_weight='balanced'` for imbalance handling
