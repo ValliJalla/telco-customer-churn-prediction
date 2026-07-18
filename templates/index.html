@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ChurnSight — Customer Retention Intelligence</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #080E1C;
+      --surface:   #0F1729;
+      --card:      #151E33;
+      --border:    #1E2D4A;
+      --accent:    #3B82F6;
+      --accent2:   #6366F1;
+      --low:       #10B981;
+      --medium:    #F59E0B;
+      --high:      #EF4444;
+      --text:      #E2E8F0;
+      --muted:     #64748B;
+      --mono:      'JetBrains Mono', monospace;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── HEADER ── */
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0 2rem;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .logo {
+      font-size: 1.25rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+    .logo span { color: var(--accent); }
+    .badge {
+      font-size: 0.65rem;
+      font-family: var(--mono);
+      background: rgba(59,130,246,0.15);
+      color: var(--accent);
+      border: 1px solid rgba(59,130,246,0.3);
+      padding: 2px 8px;
+      border-radius: 4px;
+      letter-spacing: 0.05em;
+    }
+
+    /* ── LAYOUT ── */
+    .layout {
+      display: grid;
+      grid-template-columns: 360px 1fr;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    /* ── SIDEBAR ── */
+    .sidebar {
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      overflow-y: auto;
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+    .sidebar-title {
+      font-size: 0.7rem;
+      font-family: var(--mono);
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .section-label {
+      font-size: 0.65rem;
+      font-family: var(--mono);
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 0.75rem;
+    }
+    .field-group { display: flex; flex-direction: column; gap: 0.75rem; }
+    .field { display: flex; flex-direction: column; gap: 0.3rem; }
+    .field label {
+      font-size: 0.72rem;
+      color: var(--muted);
+      font-weight: 500;
+    }
+    .field select, .field input[type="number"] {
+      background: var(--card);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 0.5rem 0.75rem;
+      border-radius: 6px;
+      font-size: 0.82rem;
+      font-family: 'Inter', sans-serif;
+      outline: none;
+      transition: border-color 0.2s;
+      width: 100%;
+    }
+    .field select:focus, .field input:focus { border-color: var(--accent); }
+
+    /* slider */
+    .slider-wrap { display: flex; flex-direction: column; gap: 0.4rem; }
+    .slider-row { display: flex; align-items: center; gap: 0.75rem; }
+    input[type="range"] {
+      flex: 1;
+      accent-color: var(--accent);
+      height: 4px;
+      cursor: pointer;
+    }
+    .slider-val {
+      font-family: var(--mono);
+      font-size: 0.8rem;
+      color: var(--accent);
+      min-width: 28px;
+      text-align: right;
+    }
+
+    /* predict button */
+    .predict-btn {
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: #fff;
+      border: none;
+      padding: 0.8rem 1rem;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      width: 100%;
+      letter-spacing: 0.01em;
+      transition: opacity 0.2s, transform 0.1s;
+      margin-top: 0.5rem;
+    }
+    .predict-btn:hover { opacity: 0.9; }
+    .predict-btn:active { transform: scale(0.98); }
+    .predict-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* ── MAIN ── */
+    main {
+      overflow-y: auto;
+      padding: 2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    /* idle state */
+    .idle-state {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+      color: var(--muted);
+      text-align: center;
+    }
+    .idle-icon {
+      width: 64px;
+      height: 64px;
+      border-radius: 16px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.75rem;
+    }
+    .idle-state h2 { font-size: 1rem; color: var(--text); font-weight: 600; }
+    .idle-state p { font-size: 0.8rem; max-width: 280px; line-height: 1.6; }
+
+    /* result area */
+    #result { display: none; flex-direction: column; gap: 1.5rem; }
+
+    /* top row */
+    .top-row {
+      display: grid;
+      grid-template-columns: 240px 1fr;
+      gap: 1.5rem;
+    }
+
+    /* gauge card */
+    .gauge-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1rem;
+    }
+    .gauge-card-title {
+      font-size: 0.65rem;
+      font-family: var(--mono);
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+    .gauge-wrap { position: relative; width: 140px; height: 140px; }
+    .gauge-wrap svg { transform: rotate(-90deg); }
+    .gauge-bg { fill: none; stroke: var(--border); stroke-width: 10; }
+    .gauge-fill {
+      fill: none;
+      stroke-width: 10;
+      stroke-linecap: round;
+      stroke-dasharray: 339.3;
+      stroke-dashoffset: 339.3;
+      transition: stroke-dashoffset 1s ease, stroke 0.5s ease;
+    }
+    .gauge-center {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    .gauge-pct {
+      font-family: var(--mono);
+      font-size: 1.6rem;
+      font-weight: 700;
+    }
+    .gauge-label { font-size: 0.65rem; color: var(--muted); margin-top: 2px; }
+    .risk-pill {
+      padding: 4px 14px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      font-family: var(--mono);
+      letter-spacing: 0.05em;
+    }
+    .risk-LOW    { background: rgba(16,185,129,0.15); color: var(--low);    border: 1px solid rgba(16,185,129,0.3); }
+    .risk-MEDIUM { background: rgba(245,158,11,0.15); color: var(--medium); border: 1px solid rgba(245,158,11,0.3); }
+    .risk-HIGH   { background: rgba(239,68,68,0.15);  color: var(--high);   border: 1px solid rgba(239,68,68,0.3); }
+
+    /* info cards */
+    .info-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: 1fr 1fr;
+      gap: 0.75rem;
+    }
+    .info-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1rem 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+    .info-card-label {
+      font-size: 0.65rem;
+      color: var(--muted);
+      font-family: var(--mono);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+    .info-card-value {
+      font-size: 1.4rem;
+      font-weight: 700;
+      font-family: var(--mono);
+      color: var(--text);
+    }
+    .info-card-sub { font-size: 0.72rem; color: var(--muted); }
+
+    /* factors section */
+    .factors-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.25rem 1.5rem;
+    }
+    .factors-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+    .factors-title {
+      font-size: 0.75rem;
+      font-family: var(--mono);
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+    .factor-row {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 0.6rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .factor-row:last-child { border-bottom: none; }
+    .factor-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .factor-name {
+      flex: 1;
+      font-size: 0.82rem;
+      color: var(--text);
+      text-transform: capitalize;
+    }
+    .factor-bar-wrap {
+      width: 100px;
+      height: 4px;
+      background: var(--border);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    .factor-bar {
+      height: 100%;
+      border-radius: 2px;
+      transition: width 0.8s ease;
+    }
+    .factor-impact {
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      min-width: 52px;
+      text-align: right;
+    }
+
+    /* verdict */
+    .verdict-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.25rem 1.5rem;
+      display: flex;
+      align-items: flex-start;
+      gap: 1rem;
+    }
+    .verdict-icon { font-size: 1.5rem; }
+    .verdict-text h3 { font-size: 0.9rem; font-weight: 600; margin-bottom: 0.3rem; }
+    .verdict-text p { font-size: 0.8rem; color: var(--muted); line-height: 1.6; }
+
+    /* scrollbar */
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+    /* divider */
+    .divider {
+      height: 1px;
+      background: var(--border);
+      margin: 0.25rem 0;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Churn<span>Sight</span></div>
+  <nav style="display:flex;gap:0.5rem;">
+    <a href="/" style="color:var(--accent);background:rgba(59,130,246,0.1);text-decoration:none;font-size:0.82rem;font-weight:500;padding:0.4rem 0.9rem;border-radius:6px;">Prediction</a>
+    <a href="/business" style="color:var(--muted);text-decoration:none;font-size:0.82rem;font-weight:500;padding:0.4rem 0.9rem;border-radius:6px;">Business Impact</a>
+  </nav>
+</header>
+
+<div class="layout">
+
+  <!-- ── SIDEBAR ── -->
+  <aside class="sidebar">
+    <div class="sidebar-title">Customer Profile</div>
+
+    <!-- Demographics -->
+    <div>
+      <div class="section-label">Demographics</div>
+      <div class="field-group">
+        <div class="field">
+          <label>Gender</label>
+          <select id="gender">
+            <option>Male</option><option>Female</option>
+          </select>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;">
+          <div class="field">
+            <label>Senior Citizen</label>
+            <select id="seniorCitizen"><option>No</option><option>Yes</option></select>
+          </div>
+          <div class="field">
+            <label>Partner</label>
+            <select id="partner"><option>Yes</option><option>No</option></select>
+          </div>
+        </div>
+        <div class="field">
+          <label>Dependents</label>
+          <select id="dependents"><option>No</option><option>Yes</option></select>
+        </div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- Account -->
+    <div>
+      <div class="section-label">Account Info</div>
+      <div class="field-group">
+        <div class="field">
+          <label>Tenure (months)</label>
+          <div class="slider-wrap">
+            <div class="slider-row">
+              <input type="range" id="tenure" min="0" max="72" value="12"
+                     oninput="document.getElementById('tenureVal').textContent=this.value"/>
+              <span class="slider-val" id="tenureVal">12</span>
+            </div>
+          </div>
+        </div>
+        <div class="field">
+          <label>Contract Type</label>
+          <select id="contract">
+            <option>Month-to-month</option>
+            <option>One year</option>
+            <option>Two year</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Monthly Charges (₹)</label>
+          <input type="number" id="monthlyCharges" value="70" min="0" max="200"/>
+        </div>
+        <div class="field">
+          <label>Payment Method</label>
+          <select id="paymentMethod">
+            <option>Electronic check</option>
+            <option>Mailed check</option>
+            <option>Bank transfer (automatic)</option>
+            <option>Credit card (automatic)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Paperless Billing</label>
+          <select id="paperlessBilling"><option>Yes</option><option>No</option></select>
+        </div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- Services -->
+    <div>
+      <div class="section-label">Services</div>
+      <div class="field-group">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;">
+          <div class="field">
+            <label>Phone Service</label>
+            <select id="phoneService"><option>Yes</option><option>No</option></select>
+          </div>
+          <div class="field">
+            <label>Multiple Lines</label>
+            <select id="multipleLines">
+              <option>No</option><option>Yes</option><option>No phone service</option>
+            </select>
+          </div>
+        </div>
+        <div class="field">
+          <label>Internet Service</label>
+          <select id="internetService">
+            <option>Fiber optic</option><option>DSL</option><option>No</option>
+          </select>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;">
+          <div class="field">
+            <label>Online Security</label>
+            <select id="onlineSecurity">
+              <option>No</option><option>Yes</option><option>No internet service</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Tech Support</label>
+            <select id="techSupport">
+              <option>No</option><option>Yes</option><option>No internet service</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Streaming TV</label>
+            <select id="streamingTV">
+              <option>No</option><option>Yes</option><option>No internet service</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Streaming Movies</label>
+            <select id="streamingMovies">
+              <option>No</option><option>Yes</option><option>No internet service</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <button class="predict-btn" id="predictBtn" onclick="predict()">
+      ⚡ Analyse Churn Risk
+    </button>
+  </aside>
+
+  <!-- ── MAIN ── -->
+  <main>
+
+    <!-- idle -->
+    <div class="idle-state" id="idleState">
+      <div class="idle-icon">📡</div>
+      <h2>No Analysis Running</h2>
+      <p>Fill in the customer profile on the left and click <strong>Analyse Churn Risk</strong> to run the prediction model.</p>
+    </div>
+
+    <!-- result -->
+    <div id="result">
+
+      <!-- top row: gauge + info cards -->
+      <div class="top-row">
+        <div class="gauge-card">
+          <div class="gauge-card-title">Churn Probability</div>
+          <div class="gauge-wrap">
+            <svg viewBox="0 0 120 120" width="140" height="140">
+              <circle class="gauge-bg" cx="60" cy="60" r="54"/>
+              <circle class="gauge-fill" id="gaugeFill" cx="60" cy="60" r="54"/>
+            </svg>
+            <div class="gauge-center">
+              <div class="gauge-pct" id="gaugePct">0%</div>
+              <div class="gauge-label">probability</div>
+            </div>
+          </div>
+          <div class="risk-pill" id="riskPill">—</div>
+        </div>
+
+        <div class="info-grid">
+          <div class="info-card">
+            <div class="info-card-label">Tenure</div>
+            <div class="info-card-value" id="infoTenure">—</div>
+            <div class="info-card-sub">months with company</div>
+          </div>
+          <div class="info-card">
+            <div class="info-card-label">Monthly Charges</div>
+            <div class="info-card-value" id="infoMonthly">—</div>
+            <div class="info-card-sub">per month</div>
+          </div>
+          <div class="info-card">
+            <div class="info-card-label">Contract</div>
+            <div class="info-card-value" style="font-size:0.9rem" id="infoContract">—</div>
+            <div class="info-card-sub">contract type</div>
+          </div>
+          <div class="info-card">
+            <div class="info-card-label">Risk Level</div>
+            <div class="info-card-value" id="infoRisk" style="font-size:1rem">—</div>
+            <div class="info-card-sub">classification</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- factors -->
+      <div class="factors-card">
+        <div class="factors-header">
+          <div class="factors-title">Key Factors Influencing This Prediction</div>
+        </div>
+        <div id="factorsList"></div>
+      </div>
+
+      <!-- verdict -->
+      <div class="verdict-card" id="verdictCard">
+        <div class="verdict-icon" id="verdictIcon">💡</div>
+        <div class="verdict-text">
+          <h3 id="verdictTitle">—</h3>
+          <p id="verdictDesc">—</p>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<script>
+  const CIRCUMFERENCE = 2 * Math.PI * 54; // 339.3
+
+  function getColor(risk) {
+    return risk === 'HIGH' ? '#EF4444' : risk === 'MEDIUM' ? '#F59E0B' : '#10B981';
+  }
+
+  function animateGauge(pct, color) {
+    const fill = document.getElementById('gaugeFill');
+    const offset = CIRCUMFERENCE - (pct / 100) * CIRCUMFERENCE;
+    fill.style.stroke = color;
+    fill.style.strokeDashoffset = offset;
+  }
+
+  async function predict() {
+    const btn = document.getElementById('predictBtn');
+    btn.disabled = true;
+    btn.textContent = 'Analysing...';
+
+    const payload = {
+      gender:          document.getElementById('gender').value,
+      seniorCitizen:   document.getElementById('seniorCitizen').value,
+      partner:         document.getElementById('partner').value,
+      dependents:      document.getElementById('dependents').value,
+      tenure:          document.getElementById('tenure').value,
+      phoneService:    document.getElementById('phoneService').value,
+      multipleLines:   document.getElementById('multipleLines').value,
+      internetService: document.getElementById('internetService').value,
+      onlineSecurity:  document.getElementById('onlineSecurity').value,
+      techSupport:     document.getElementById('techSupport').value,
+      streamingTV:     document.getElementById('streamingTV').value,
+      streamingMovies: document.getElementById('streamingMovies').value,
+      contract:        document.getElementById('contract').value,
+      paperlessBilling:document.getElementById('paperlessBilling').value,
+      paymentMethod:   document.getElementById('paymentMethod').value,
+      monthlyCharges:  document.getElementById('monthlyCharges').value,
+    };
+
+    try {
+      const res  = await fetch('/predict', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      renderResult(data);
+    } catch (e) {
+      alert('Prediction failed — is the Flask server running?');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = '⚡ Analyse Churn Risk';
+    }
+  }
+
+  function renderResult(data) {
+    document.getElementById('idleState').style.display = 'none';
+    const resultEl = document.getElementById('result');
+    resultEl.style.display = 'flex';
+
+    const { probability, risk, factors, tenure, monthly, contract } = data;
+    const color = getColor(risk);
+
+    // gauge
+    animateGauge(probability, color);
+    document.getElementById('gaugePct').textContent = probability + '%';
+    document.getElementById('gaugePct').style.color = color;
+
+    // risk pill
+    const pill = document.getElementById('riskPill');
+    pill.textContent = risk + ' RISK';
+    pill.className = 'risk-pill risk-' + risk;
+
+    // info cards
+    document.getElementById('infoTenure').textContent   = tenure;
+    document.getElementById('infoMonthly').textContent  = '₹' + monthly;
+    document.getElementById('infoContract').textContent = contract;
+    document.getElementById('infoRisk').textContent     = risk;
+    document.getElementById('infoRisk').style.color     = color;
+
+    // factors
+    const maxAbs = Math.max(...factors.map(f => Math.abs(f.impact)));
+    const list   = document.getElementById('factorsList');
+    list.innerHTML = '';
+    factors.forEach(f => {
+      const barPct = Math.round((Math.abs(f.impact) / maxAbs) * 100);
+      const fc     = f.direction === 'increase' ? '#EF4444' : '#10B981';
+      const arrow  = f.direction === 'increase' ? '▲' : '▼';
+      list.innerHTML += `
+        <div class="factor-row">
+          <div class="factor-dot" style="background:${fc}"></div>
+          <div class="factor-name">${f.name}</div>
+          <div class="factor-bar-wrap">
+            <div class="factor-bar" style="width:${barPct}%;background:${fc}"></div>
+          </div>
+          <div class="factor-impact" style="color:${fc}">${arrow} ${Math.abs(f.impact).toFixed(3)}</div>
+        </div>`;
+    });
+
+    // verdict
+    const verdicts = {
+      HIGH:   {
+        icon: '🚨',
+        title: 'Immediate Retention Action Recommended',
+        desc:  `This customer shows a ${probability}% churn probability. Consider a personalised retention offer — contract upgrade incentive, loyalty discount, or proactive support outreach within 48 hours.`
+      },
+      MEDIUM: {
+        icon: '⚠️',
+        title: 'Monitor and Engage Proactively',
+        desc:  `Churn probability is ${probability}% — moderate risk. Schedule a satisfaction check-in and evaluate if the current plan still meets this customer's needs.`
+      },
+      LOW:    {
+        icon: '✅',
+        title: 'Customer Likely to Stay',
+        desc:  `Low churn risk at ${probability}%. This customer has a stable profile. Continue current service quality and standard engagement cadence.`
+      }
+    };
+    const v = verdicts[risk];
+    document.getElementById('verdictIcon').textContent  = v.icon;
+    document.getElementById('verdictTitle').textContent = v.title;
+    document.getElementById('verdictDesc').textContent  = v.desc;
+  }
+</script>
+</body>
+</html>
